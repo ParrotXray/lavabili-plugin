@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 @Service
 class LavabiliPlugin(private val config: PluginConfig) : AudioPlayerManagerConfiguration {
     init {
-        log.info("START: lavabili-plugin:v0.1 by Stevehyl.")
+        log.info("START: lavabili-plugin.")
     }
 
     override fun configure(manager: AudioPlayerManager): AudioPlayerManager {
