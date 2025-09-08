@@ -49,5 +49,5 @@ jobs:
       if: github.event_name == 'release'
       uses: actions/upload-artifact@v4
       with:
-        name: build-artifacts-java-${{ matrix.java }}
-        path: build/libs/
+        name: build-artifacts-java-21
+        path: build/libs/*.jar
