@@ -49,5 +49,14 @@ jobs:
       if: github.event_name == 'release'
       uses: actions/upload-artifact@v4
       with:
-        name: build-artifacts-java-21
-        path: build/libs/*.jar
+        name: build/libs/*.jar
+        path: build/libs/
+    
+    - name: Upload Release Assets
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          build/libs/*.jar
+          build/libs/*.war
+        token: ${{ secrets.GITHUB_TOKEN }}
