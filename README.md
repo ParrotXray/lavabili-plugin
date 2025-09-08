@@ -13,76 +13,24 @@ Differences:
 + Support for older bilibili videos that uses `aid` videoId.
 
 ## How?
-In your `application.yml`, add the following dependency under `lavalink/plugins` section.
+Configuring the plugin:
 ```
 ...
 lavalink:
   plugins:
-    - dependency: "com.github.hoyiliang:lavabili-plugin:<jitpack_build_id>"
+    # Replace VERSION with the current version as shown by the Releases tab or a long commit hash for snapshots.
+    - dependency: "com.github.ParrotXray:lavabili-plugin:1.0.0"
       snapshot: false
       repository: "https://jitpack.io"
-...
 ```
 
-Then, under `lavalink/server/sources` section, add `bilibili: true`.
+Configuring the plugin:
 ```
-...
 plugins:
   lavabili:
     sources:
       enable: true
     playlistPageCount: -1  # optional, -1 means no limit
-...
 ```
 
-**Note: The decision to use `MIT License` is derived from [(hoyiliang/lavabili-plugin)](https://github.com/hoyiliang/lavabili-plugin).**
-
-# lavalink-plugin-template
-
-**Note: This project has been converted to use Kotlin 1.8.22.**
-
-This is a template for creating a plugin for [Lavalink](https://github.com/lavalink-devs/Lavalink). It is written in
-java, but you can also use kotlin (version `1.8.22`) if you want.
-
-## How to use this template
-
-1. Clone this repository
-2. Rename the package `com.example.plugin` to your package name
-3. Rename the class `ExamplePlugin` to your plugin name
-4. Rename the file `ExamplePlugin.java` to your plugin name
-5. fill in the `lavalinkPlugin` in [build.gradle.kts](build.gradle.kts)
-6. Write your plugin
-
-## How to test your plugin
-
-1. Place a `application.yml` file in the root directory (see [here](https://lavalink.dev/configuration/index.html#example-applicationyml) for an example)
-2. Run `./gradlew runLavalink` (for windows: `./gradlew.bat runLavalink`) in the root directory
-3. The plugin will be loaded
-4. You can now test your plugin
-5. If you change something in the plugin, you can just run `./gradlew runLavalink` again
-
-## How to build your plugin
-
-1. Run `./gradlew build` (for windows: `./gradlew.bat build`) in the root directory
-2. The jar file will be in `build/libs/`
-
-## How to publish your plugin
-
-This template uses [jitpack](https://jitpack.io/) to publish the plugin. You just need to push your changes to github
-and jitpack will build the plugin for you.
-
-## How to use your plugin
-
-Go to [jitpack](https://jitpack.io/) and paste the link to your repository. There you can find the version you want to use.
-
-```yml
-lavalink:
-  plugins:
-    - dependency: com.github.lavalink:lavalink-plugin-template:{VERSION} # replace {VERSION} with the version you want to use from jitpack
-      repository: https://jitpack.io
-```
-
-## How to get help
-
-If you need help, you can join the [Lavalink Discord Server](https://discord.gg/jttmwHTAad) and ask in
-the `#plugin-dev` channel.
+**Note: The decision to use `MIT License` is derived from [(ParrotXray/lavabili-plugin)](https://github.com/ParrotXray/lavabili-plugin).**
