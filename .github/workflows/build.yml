@@ -51,7 +51,7 @@ jobs:
     
     - name: Upload build artifacts
       if: github.event_name == 'release'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-artifacts-java-${{ matrix.java }}
         path: build/libs/
