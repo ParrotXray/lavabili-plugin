@@ -44,13 +44,24 @@ jobs:
     - name: Generate build report
       if: always()
       run: ./gradlew build --scan
+
+    - name: Get artifact name
+      if: github.event_name == 'release'
+      id: get_artifact_name
+      run: |
+        MAIN_JAR=$(find build/libs/ -name "*.jar" -not -name "*-sources.jar" -not -name "*-javadoc.jar" | head -1 | xargs basename -s .jar)
+        if [ -z "$MAIN_JAR" ]; then
+          MAIN_JAR=$(find build/libs/ -name "*.jar" | head -1 | xargs basename -s .jar)
+        fi
+        echo "artifact_name=$MAIN_JAR" >> $GITHUB_OUTPUT
+        echo "Found artifact name: $MAIN_JAR"
     
     - name: Upload build artifacts
       if: github.event_name == 'release'
       uses: actions/upload-artifact@v4
       with:
-        name: build/libs/*.jar
-        path: build/libs/
+        name: ${{ steps.get_artifact_name.outputs.artifact_name }}
+        path: build/libs/*.jar
     
     - name: Upload Release Assets
       if: github.event_name == 'release'
