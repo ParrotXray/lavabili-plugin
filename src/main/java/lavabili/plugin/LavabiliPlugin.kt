@@ -19,7 +19,7 @@ class LavabiliPlugin(private val config: PluginConfig) : AudioPlayerManagerConfi
                 BilibiliAudioSourceManager()
                     .setPlaylistPageCount(config.playlistPageCount)
             )
-            log.info("Registered Bilibili source manager.")
+            log.info("Registered Bilibili source manager...")
         }
         return manager
     }

@@ -5,7 +5,7 @@
 A lavalink plugin written to add Bilibili as an additional audio playing source.
 
 ## Why?
-This plugin is rebuilt for latest Lavalink (v4) based on [(Allvaa/lp-sources, 2022)](https://github.com/Allvaa/lp-sources).
+This plugin is rebuilt for latest Lavalink (v4) based on [(hoyiliang/lavabili-plugin)](https://github.com/hoyiliang/lavabili-plugin).
 
 Differences:
 + Removed unknown & unresolvable build dependencies.
@@ -35,7 +35,7 @@ plugins:
 ...
 ```
 
-**Note: The decision to use `MIT License` is derived from [(Allvaa/lp-sources, 2022)](https://github.com/Allvaa/lp-sources).**
+**Note: The decision to use `MIT License` is derived from [(hoyiliang/lavabili-plugin)](https://github.com/hoyiliang/lavabili-plugin).**
 
 # lavalink-plugin-template
 
