@@ -87,8 +87,15 @@ class BilibiliAudioSourceManager : AudioSourceManager {
                     }
 
                     val trackData = responseJson.get("data")
-                    return if (trackData.get("pages").values().size > 1) {
-                        loadVideoAnthology(trackData, page)
+                    val pagesCount = trackData.get("pages").values().size
+                    val hasPageParameter = matcher.group("page") != null
+                    
+                    return if (pagesCount > 1) {
+                        if (hasPageParameter) {
+                            loadVideoFromAnthology(trackData, page)
+                        } else {
+                            loadVideoAnthology(trackData, 0)
+                        }
                     } else {
                         loadVideo(trackData)
                     }
@@ -271,7 +278,47 @@ class BilibiliAudioSourceManager : AudioSourceManager {
         )
     }
 
-    private fun loadVideoAnthology(trackData: JsonBrowser, page: Int): AudioPlaylist {
+    private fun loadVideoFromAnthology(trackData: JsonBrowser, pageIndex: Int): AudioTrack {
+        val log: Logger = LoggerFactory.getLogger(LavabiliPlugin::class.java)
+        log.debug("DEBUG: Loading single track from anthology, page: $pageIndex")
+        log.debug("DEBUG: ${trackData.text()}")
+
+        val author = trackData.get("owner").get("name").`as`(String::class.java)
+        val bvid = trackData.get("bvid").`as`(String::class.java)
+        val pages = trackData.get("pages").values()
+
+        if (pageIndex < 0 || pageIndex >= pages.size) {
+            log.warn("Invalid page index: $pageIndex, total pages: ${pages.size}")
+            return loadVideo(trackData)
+        }
+
+        val pageData = pages[pageIndex]
+        
+        val artworkUrl: String? = if (trackData.get("pic").text() != null) {
+            trackData.get("pic").text()
+        } else {
+            trackData.get("first_frame").text()
+        }
+
+        return BilibiliAudioTrack(
+            AudioTrackInfo(
+                pageData.get("part").`as`(String::class.java),
+                author,
+                pageData.get("duration").asLong(0) * 1000,
+                bvid,
+                false,
+                getVideoUrl(bvid, pageData.get("page").`as`(Int::class.java)),
+                artworkUrl,
+                if (artworkUrl != null) "" else null
+            ),
+            BilibiliAudioTrack.TrackType.VIDEO,
+            bvid,
+            pageData.get("cid").asLong(0),
+            this
+        )
+    }
+
+    private fun loadVideoAnthology(trackData: JsonBrowser, selectedPage: Int): AudioPlaylist {
         val log: Logger = LoggerFactory.getLogger(LavabiliPlugin::class.java)
         log.debug("DEBUG: ${trackData.text()}")
 
@@ -307,7 +354,9 @@ class BilibiliAudioSourceManager : AudioSourceManager {
             ))
         }
 
-        return BasicAudioPlaylist(playlistName, tracks, tracks[page], false)
+        val selectedTrack = if (selectedPage in 0 until tracks.size) tracks[selectedPage] else null
+        
+        return BasicAudioPlaylist(playlistName, tracks, selectedTrack, false)
     }
 
     private fun loadAudio(trackData: JsonBrowser): AudioTrack {
