@@ -19,6 +19,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.DataInput
 import java.io.DataOutput
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class BilibiliAudioSourceManager : AudioSourceManager {
     val log: Logger = LoggerFactory.getLogger(LavabiliPlugin::class.java)
@@ -38,6 +40,13 @@ class BilibiliAudioSourceManager : AudioSourceManager {
 
     override fun loadItem(manager: AudioPlayerManager, reference: AudioReference): AudioItem? {
         log.debug("DEBUG: reference.identifier: ${reference.identifier}")
+        
+        // Handle bilisearch: prefix for search functionality
+        if (reference.identifier.startsWith("bilisearch:")) {
+            val searchQuery = reference.identifier.substring("bilisearch:".length).trim()
+            log.debug("DEBUG: Bilibili search query: $searchQuery")
+            return searchBilibili(searchQuery)
+        }
         
         // Handle b23.tv short URLs by resolving them first
         val resolvedUrl = if (reference.identifier.contains("b23.tv")) {
@@ -109,6 +118,104 @@ class BilibiliAudioSourceManager : AudioSourceManager {
             }
         }
         return null
+    }
+
+    private fun searchBilibili(query: String): AudioPlaylist? {
+        return try {
+            val encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8.toString())
+
+            val searchUrl = "https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
+            
+            log.debug("DEBUG: Bilibili search URL: $searchUrl")
+            
+            val response = httpInterface.execute(HttpGet(searchUrl))
+            
+            val responseJson = JsonBrowser.parse(response.entity.content)
+            
+            val statusCode = responseJson.get("code").`as`(Int::class.java)
+            if (statusCode != 0) {
+                val message = responseJson.get("message").text() ?: "Unknown error"
+                log.warn("Bilibili search failed with status code: $statusCode, message: $message")
+                return BasicAudioPlaylist("Bilibili Search Results", emptyList(), null, true)
+            }
+            
+            val searchResults = responseJson.get("data").get("result")
+            val tracks = ArrayList<AudioTrack>()
+            
+            for (item in searchResults.values()) {
+                try {
+                    val bvid = item.get("bvid")?.text()
+                    val title = item.get("title")?.text()
+                    val author = item.get("author")?.text()
+                    val duration = item.get("duration")?.text()
+                    val pic = item.get("pic")?.text()
+                    
+                    if (bvid != null && title != null && author != null) {
+                        // Parse duration from "mm:ss" format to milliseconds
+                        val durationMs = parseDuration(duration)
+                        
+                        // Clean HTML tags from title and author
+                        val cleanTitle = cleanHtmlTags(title)
+                        val cleanAuthor = cleanHtmlTags(author)
+                        
+                        val track = BilibiliAudioTrack(
+                            AudioTrackInfo(
+                                cleanTitle,
+                                cleanAuthor,
+                                durationMs,
+                                bvid,
+                                false,
+                                getVideoUrl(bvid),
+                                pic,
+                                if (pic != null) "" else null
+                            ),
+                            BilibiliAudioTrack.TrackType.VIDEO,
+                            bvid,
+                            item.get("cid")?.asLong(0) ?: 0L,
+                            this
+                        )
+                        tracks.add(track)
+                    }
+                } catch (e: Exception) {
+                    log.warn("Failed to parse search result item", e)
+                }
+            }
+            
+            log.debug("DEBUG: Found ${tracks.size} tracks for query: $query")
+            BasicAudioPlaylist("Bilibili Search: $query", tracks, null, true)
+            
+        } catch (e: Exception) {
+            log.error("Error during Bilibili search", e)
+            BasicAudioPlaylist("Bilibili Search Results", emptyList(), null, true)
+        }
+    }
+    
+    private fun parseDuration(duration: String?): Long {
+        if (duration == null) return 0L
+        
+        return try {
+            val parts = duration.split(":")
+            when (parts.size) {
+                2 -> {
+                    val minutes = parts[0].toLong()
+                    val seconds = parts[1].toLong()
+                    (minutes * 60 + seconds) * 1000
+                }
+                3 -> {
+                    val hours = parts[0].toLong()
+                    val minutes = parts[1].toLong()
+                    val seconds = parts[2].toLong()
+                    (hours * 3600 + minutes * 60 + seconds) * 1000
+                }
+                else -> 0L
+            }
+        } catch (e: Exception) {
+            0L
+        }
+    }
+    
+    private fun cleanHtmlTags(text: String): String {
+        return text.replace(Regex("<[^>]*>"), "").trim()
     }
 
     private fun resolveShortUrl(shortUrl: String): String {
