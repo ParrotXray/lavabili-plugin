@@ -19,8 +19,7 @@ A Lavalink plugin that adds **Bilibili** as an audio source, rebuilt for the lat
 
 ## Installation
 
-### Using JitPack (Recommended)
-
+### Plugin Configuration
 Add the plugin to your `application.yml`:
 
 ```yaml
@@ -32,8 +31,6 @@ lavalink:
 ```
 
 - **Note**: Replace `VERSION` with the latest version shown in the [Releases](https://github.com/ParrotXray/lavabili-plugin/releases) tab or use a commit hash for snapshots.
-
-### Plugin Configuration
 
 ```yaml
 plugins:
