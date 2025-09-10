@@ -151,6 +151,9 @@ https://www.bilibili.com/audio/am789012
 
 # Generate test reports
 ./gradlew test --scan
+
+# Start test environment
+./gradlew runLavalink
 ```
 
 ## Supported URL Formats

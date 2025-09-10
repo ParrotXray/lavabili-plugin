@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "lavabili"
-version = "1.0.1"
+version = "1.0.2"
 
 lavalinkPlugin {
     name = "lavabili-plugin"
