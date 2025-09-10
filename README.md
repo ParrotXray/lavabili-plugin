@@ -9,7 +9,7 @@ Configuring the plugin:
 lavalink:
   plugins:
     # Replace VERSION with the current version as shown by the Releases tab or a long commit hash for snapshots.
-    - dependency: "com.github.ParrotXray:lavabili-plugin:1.0.0"
+    - dependency: "com.github.ParrotXray:lavabili-plugin:VERSION"
       snapshot: false
       repository: "https://jitpack.io"
 ```
