@@ -35,7 +35,7 @@ lavalink:
 ```yaml
 plugins:
   lavabili:
-    enable: true
+    enabled: true
     playlistPageCount: -1  # -1 means no limit, or set a specific number
     auth:
       enabled: false # setting "enabled: true" is the bare minimum to get Authentication working.
