@@ -49,6 +49,8 @@ plugins:
 
 ## Getting Bilibili Cookies for Authentication
 
+For Reference: https://nemo2011.github.io/bilibili-api/#/get-credential
+
 ### Quick Method (Browser Console)
 
 1. Login to [bilibili.com](https://www.bilibili.com)
@@ -82,7 +84,7 @@ getBilibiliCookies();
 
 ### Manual Method (Browser DevTools)
 
-1. Login to Bilibili
+1. Login to [bilibili.com](https://www.bilibili.com)
 2. Press `F12` → `Network` tab → Refresh page
 3. Find `www.bilibili.com` request
 4. Look for `Cookie` in Request Headers
