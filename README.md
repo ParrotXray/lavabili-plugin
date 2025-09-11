@@ -39,6 +39,7 @@ plugins:
     playlistPageCount: -1  # -1 means no limit, or set a specific number
     auth:
       enabled: false # setting "enabled: true" is the bare minimum to get Authentication working.
+      # After logging in to Bilibili, open the developer tools and extract the cookie information.
       sessdata: "paste your sessdata here if applicable"
       biliJct: "paste your biliJct here if applicable"
       dedeUserId: "paste your dedeUserId here if applicable"
