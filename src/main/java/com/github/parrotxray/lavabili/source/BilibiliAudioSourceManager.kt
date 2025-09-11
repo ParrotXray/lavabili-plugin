@@ -36,7 +36,7 @@ class BilibiliAudioSourceManager(private val config: BiliBiliConfig? = null) : A
         httpInterface = httpInterfaceManager.`interface`
         
         if (config?.isAuthenticated == true) {
-            log.info("Bilibili authentication enabled with SESSDATA: ${config.authentication.sessdata.take(8)}...")
+            log.info("Bilibili authentication enabled with SESSDATA: ${config.auth.sessdata.take(8)}...")
         } else {
             log.info("Bilibili running in guest mode (no authentication)")
         }

@@ -46,7 +46,7 @@ class BilibiliHttpContextFilter(private val config: BiliBiliConfig? = null) : Ht
         val cookieBuilder = StringBuilder()
         
         if (config?.isAuthenticated == true) {
-            val auth = config.authentication
+            val auth = config.auth
 
             if (auth.sessdata.isNotEmpty()) {
                 cookieBuilder.append("SESSDATA=${auth.sessdata}; ")
@@ -90,10 +90,10 @@ class BilibiliHttpContextFilter(private val config: BiliBiliConfig? = null) : Ht
                 request.setHeader("Referer", "https://search.bilibili.com/")
             }
             
-            if (config?.isAuthenticated == true && config.authentication.biliJct.isNotEmpty()) {
+            if (config?.isAuthenticated == true && config.auth.biliJct.isNotEmpty()) {
                 val uri = request.uri.toString()
                 if (uri.contains("/web-interface/") || uri.contains("/pgc/player/")) {
-                    request.setHeader("X-CSRF-Token", config.authentication.biliJct)
+                    request.setHeader("X-CSRF-Token", config.auth.biliJct)
                 }
             }
         }

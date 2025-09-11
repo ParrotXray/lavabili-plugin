@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 data class BiliBiliConfig(
     val sources: Sources = Sources(),
     val playlistPageCount: Int = -1,
-    val authentication: Authentication = Authentication()
+    val auth: Authentication = Authentication()
 ) {
     data class Sources(
         var enable: Boolean = true
@@ -27,5 +27,5 @@ data class BiliBiliConfig(
         get() = if (sources.enable) listOf("bilibili") else emptyList()
 
     val isAuthenticated: Boolean
-        get() = authentication.enabled && authentication.sessdata.isNotEmpty()
+        get() = auth.enabled && auth.sessdata.isNotEmpty()
 }
