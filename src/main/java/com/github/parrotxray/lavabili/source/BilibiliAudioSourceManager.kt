@@ -132,6 +132,8 @@ class BilibiliAudioSourceManager : AudioSourceManager {
             val encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8.toString())
 
             val searchUrl = "https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
+
+            // val searchUrl = "https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
             
             log.debug("DEBUG: Bilibili search URL: $searchUrl")
             
