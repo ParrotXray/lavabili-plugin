@@ -10,14 +10,12 @@ import org.springframework.stereotype.Service
 @Service
 class LavabiliPlugin(private val config: BiliBiliConfig) : AudioPlayerManagerConfiguration {
     init {
-        log.info("START: lavabili-plugin.")
+        log.info("Loading Lavabili plugin...")
 
         if (config.isAuthenticated) {
-            log.info("Bilibili auth: ENABLED")
-            log.info("  - SESSDATA: ${config.auth.sessdata.take(8)}...")
-            log.info("  - User ID: ${config.auth.dedeUserId}")
+            log.info("Bilibili authentication: SESSDATA=${config.auth.sessdata.take(8)}*** | UserID=${config.auth.dedeUserId}")
         } else {
-            log.info("Bilibili auth: DISABLED (guest mode)")
+            log.info("Bilibili authentication: DISABLED (guest mode)")
         }
         
         log.info("Playlist page count limit: ${if (config.playlistPageCount == -1) "unlimited" else config.playlistPageCount}")
