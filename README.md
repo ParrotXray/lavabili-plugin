@@ -47,6 +47,49 @@ plugins:
       buvid4: "paste your buvid4 here if applicable"
 ```
 
+## Getting Bilibili Cookies for Authentication
+
+### Quick Method (Browser Console)
+
+1. Login to [bilibili.com](https://www.bilibili.com)
+2. Press `F12` and go to `Console` tab
+3. Run this script:
+
+```javascript
+function getBilibiliCookies() {
+    const cookieNames = ['SESSDATA', 'bili_jct', 'DedeUserID', 'buvid3', 'buvid4'];
+    const cookies = {};
+    
+    const fullCookie = document.cookie;
+    console.log('Full cookie string: ', fullCookie);
+    
+    cookieNames.forEach(name => {
+        const regex = new RegExp(`(?:^|; )${name}=([^;]*)`);
+        const match = fullCookie.match(regex);
+        cookies[name] = match ? decodeURIComponent(match[1]) : '';
+    });
+    
+    console.log('Bilibili Cookies:');
+    console.log('SESSDATA:', cookies.SESSDATA);
+    console.log('bili_jct:', cookies.bili_jct);
+    console.log('DedeUserID:', cookies.DedeUserID);
+    console.log('buvid3:', cookies.buvid3);
+    console.log('buvid4:', cookies.buvid4);
+}
+
+getBilibiliCookies();
+```
+
+### Manual Method (Browser DevTools)
+
+1. Login to Bilibili
+2. Press `F12` → `Network` tab → Refresh page
+3. Find `www.bilibili.com` request
+4. Look for `Cookie` in Request Headers
+5. Extract values for `SESSDATA`, `bili_jct`, `DedeUserID`, `buvid3`, `buvid4`, and `DedeUserID`
+
+**⚠️ Security Warning**: Never share your cookies - they're equivalent to your login credentials!
+
 ## Usage Examples
 
 ### Direct Video URLs
