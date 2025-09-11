@@ -1,11 +1,11 @@
-package lavabili.plugin
+package com.github.parrotxray.lavabili.plugin
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 
 @ConfigurationProperties(prefix = "plugins.lavabili")
 @Component
-data class PluginConfig(
+data class BiliBiliConfig(
     val sources: Sources = Sources(),
     val playlistPageCount: Int = -1
 ) {

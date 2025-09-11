@@ -1,4 +1,4 @@
-package lavabili.source
+package com.github.parrotxray.lavabili.source
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager
@@ -8,7 +8,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor
-import lavabili.source.BilibiliAudioSourceManager.Companion.BASE_URL
+import com.github.parrotxray.lavabili.source.BilibiliAudioSourceManager.Companion.BASE_URL
 import org.apache.http.client.methods.HttpGet
 import java.net.URI
 

@@ -4,8 +4,8 @@ plugins {
     kotlin("jvm")
 }
 
-group = "lavabili"
-version = "1.0.2"
+group = "com.github.parrotxray.lavabili"
+version = "1.0.3"
 
 lavalinkPlugin {
     name = "lavabili-plugin"
@@ -15,7 +15,7 @@ lavalinkPlugin {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -28,7 +28,11 @@ tasks {
 dependencies {
     // add your dependencies here
     implementation(kotlin("stdlib-jdk8"))
+    compileOnly(libs.lavalink.server)
+    compileOnly(libs.lavaplayer)
+
 }
 repositories {
     mavenCentral()
+    maven { url = uri("https://jitpack.io") } // For LavaPlayer dependencies
 }

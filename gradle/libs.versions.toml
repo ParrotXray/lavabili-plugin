@@ -1,6 +1,11 @@
 [versions]
-lavalink-api = "4.0.6"
-lavalink-server = "4.0.6"
+lavalink-api = "4.1.1"
+lavalink-server = "4.1.1"
+lavaplayer = "2.2.4"
 
 [plugins]
-lavalink = { id = "dev.arbjerg.lavalink.gradle-plugin", version = "1.0.15" }
+lavalink = { id = "dev.arbjerg.lavalink.gradle-plugin", version = "1.1.2" }
+
+[libraries]
+lavaplayer = { group = "dev.arbjerg", name = "lavaplayer", version.ref = "lavaplayer" }
+lavalink-server = { group = "dev.arbjerg.lavalink", name = "Lavalink-Server", version.ref = "lavalink-server" }

@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Publish
 
 on:
   push:
@@ -61,3 +61,16 @@ jobs:
         omitDraftDuringUpdate: true
         omitNameDuringUpdate: true
         omitPrereleaseDuringUpdate: true
+
+    - name: Trigger JitPack build
+      if: github.event_name == 'release'
+      run: |
+        curl -X POST "https://jitpack.io/api/builds/com.github.${{ github.repository }}/${{ github.event.release.tag_name }}" \
+        -H "Content-Type: application/json" \
+        -d '{}'
+        
+    - name: Notify JitPack build status
+      if: github.event_name == 'release'
+      run: |
+        echo "JitPack build triggered for ${{ github.event.release.tag_name }}"
+        echo "Check build status at: https://jitpack.io/com/github/${{ github.repository }}/${{ github.event.release.tag_name }}"

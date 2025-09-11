@@ -1,4 +1,4 @@
-package lavabili.source
+package com.github.parrotxray.lavabili.source
 
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter
 import org.apache.http.HttpResponse

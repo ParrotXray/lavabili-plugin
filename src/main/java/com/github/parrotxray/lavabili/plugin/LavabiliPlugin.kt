@@ -1,14 +1,14 @@
-package lavabili.plugin
+package com.github.parrotxray.lavabili.plugin
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import dev.arbjerg.lavalink.api.AudioPlayerManagerConfiguration
-import lavabili.source.BilibiliAudioSourceManager
+import com.github.parrotxray.lavabili.source.BilibiliAudioSourceManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-class LavabiliPlugin(private val config: PluginConfig) : AudioPlayerManagerConfiguration {
+class LavabiliPlugin(private val config: BiliBiliConfig) : AudioPlayerManagerConfiguration {
     init {
         log.info("START: lavabili-plugin.")
     }
