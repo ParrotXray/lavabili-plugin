@@ -38,6 +38,13 @@ plugins:
     sources:
       enable: true
     playlistPageCount: -1  # -1 means no limit, or set a specific number
+    auth:
+      enabled: false # setting "enabled: true" is the bare minimum to get Authentication working.
+      sessdata: "paste your sessdata here if applicable"
+      biliJct: "paste your biliJct here if applicable"
+      dedeUserId: "paste your dedeUserId here if applicable"
+      buvid3: "paste your buvid3 here if applicable"
+      buvid4: "paste your buvid4 here if applicable"
 ```
 
 ## Usage Examples
