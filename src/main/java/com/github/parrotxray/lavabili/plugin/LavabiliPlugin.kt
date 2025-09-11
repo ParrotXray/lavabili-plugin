@@ -8,17 +8,19 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-class LavabiliPlugin(private val config: BiliBiliConfig) : AudioPlayerManagerConfiguration {
+class LavabiliPlugin(private val config: BilibiliConfig) : AudioPlayerManagerConfiguration {
     init {
-        log.info("Loading Lavabili plugin...")
+        if (config.enabled) {
+            log.info("Loading Lavabili plugin...")
 
-        if (config.isAuthenticated) {
-            log.info("Bilibili authentication: SESSDATA=${config.auth.sessdata.take(8)}*** | UserID=${config.auth.dedeUserId}")
-        } else {
-            log.info("Bilibili authentication: DISABLED (guest mode)")
+            if (config.isAuthenticated) {
+                log.info("Bilibili authentication: SESSDATA=${config.auth.sessdata.take(8)}***, UserID=${config.auth.dedeUserId.take(4)}***")
+            } else {
+                log.info("Bilibili authentication: DISABLED (guest mode)")
+            }
+
+            log.debug("Playlist page count limit: ${if (config.playlistPageCount == -1) "unlimited" else config.playlistPageCount}")
         }
-        
-        log.info("Playlist page count limit: ${if (config.playlistPageCount == -1) "unlimited" else config.playlistPageCount}")
     }
 
     override fun configure(manager: AudioPlayerManager): AudioPlayerManager {

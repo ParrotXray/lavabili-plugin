@@ -13,7 +13,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist
 import com.github.parrotxray.lavabili.plugin.LavabiliPlugin
-import com.github.parrotxray.lavabili.plugin.BiliBiliConfig
+import com.github.parrotxray.lavabili.plugin.BilibiliConfig
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.slf4j.Logger
@@ -23,7 +23,7 @@ import java.io.DataOutput
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-class BilibiliAudioSourceManager(private val config: BiliBiliConfig? = null) : AudioSourceManager {
+class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : AudioSourceManager {
     val log: Logger = LoggerFactory.getLogger(LavabiliPlugin::class.java)
 
     val httpInterface: HttpInterface
@@ -31,15 +31,8 @@ class BilibiliAudioSourceManager(private val config: BiliBiliConfig? = null) : A
 
     init {
         val httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager()
-        // 传入配置给 HttpContextFilter
         httpInterfaceManager.setHttpContextFilter(BilibiliHttpContextFilter(config))
         httpInterface = httpInterfaceManager.`interface`
-        
-        if (config?.isAuthenticated == true) {
-            log.info("Bilibili authentication enabled with SESSDATA: ${config.auth.sessdata.take(8)}...")
-        } else {
-            log.info("Bilibili running in guest mode (no authentication)")
-        }
     }
 
     override fun getSourceName(): String? {

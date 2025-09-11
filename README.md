@@ -1,4 +1,4 @@
-# Lavabili Plugin
+# Lavabili
 
 <p align="center">
   <img src="https://img.shields.io/badge/Lavalink-v4-blue" alt="Lavalink Version">
@@ -35,8 +35,7 @@ lavalink:
 ```yaml
 plugins:
   lavabili:
-    sources:
-      enable: true
+    enable: true
     playlistPageCount: -1  # -1 means no limit, or set a specific number
     auth:
       enabled: false # setting "enabled: true" is the bare minimum to get Authentication working.

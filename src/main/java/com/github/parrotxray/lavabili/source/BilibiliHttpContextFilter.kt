@@ -1,13 +1,13 @@
 package com.github.parrotxray.lavabili.source
 
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter
-import com.github.parrotxray.lavabili.plugin.BiliBiliConfig
+import com.github.parrotxray.lavabili.plugin.BilibiliConfig
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
 import java.util.*
 
-class BilibiliHttpContextFilter(private val config: BiliBiliConfig? = null) : HttpContextFilter {
+class BilibiliHttpContextFilter(private val config: BilibiliConfig? = null) : HttpContextFilter {
     
     private fun generateBuvid3(): String {
         val chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"

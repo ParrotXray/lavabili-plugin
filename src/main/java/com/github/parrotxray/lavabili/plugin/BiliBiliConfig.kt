@@ -5,14 +5,11 @@ import org.springframework.stereotype.Component
 
 @ConfigurationProperties(prefix = "plugins.lavabili")
 @Component
-data class BiliBiliConfig(
-    val sources: Sources = Sources(),
-    val playlistPageCount: Int = -1,
-    val auth: Authentication = Authentication()
+data class BilibiliConfig(
+    var enabled: Boolean = false,
+    var playlistPageCount: Int = -1,
+    var auth: Authentication = Authentication()
 ) {
-    data class Sources(
-        var enable: Boolean = true
-    )
     
     data class Authentication(
         var enabled: Boolean = false,
@@ -24,7 +21,7 @@ data class BiliBiliConfig(
     )
 
     val activeSources: List<String>
-        get() = if (sources.enable) listOf("bilibili") else emptyList()
+        get() = if (enabled) listOf("bilibili") else emptyList()
 
     val isAuthenticated: Boolean
         get() = auth.enabled && auth.sessdata.isNotEmpty()
