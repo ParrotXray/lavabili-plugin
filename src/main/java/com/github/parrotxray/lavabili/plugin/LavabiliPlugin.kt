@@ -11,15 +11,25 @@ import org.springframework.stereotype.Service
 class LavabiliPlugin(private val config: BiliBiliConfig) : AudioPlayerManagerConfiguration {
     init {
         log.info("START: lavabili-plugin.")
+
+        if (config.isAuthenticated) {
+            log.info("Bilibili authentication: ENABLED")
+            log.info("  - SESSDATA: ${config.authentication.sessdata.take(8)}...")
+            log.info("  - User ID: ${config.authentication.dedeUserId}")
+        } else {
+            log.info("Bilibili authentication: DISABLED (guest mode)")
+        }
+        
+        log.info("Playlist page count limit: ${if (config.playlistPageCount == -1) "unlimited" else config.playlistPageCount}")
     }
 
     override fun configure(manager: AudioPlayerManager): AudioPlayerManager {
         if (config.activeSources.contains("bilibili")) {
-            manager.registerSourceManager(
-                BilibiliAudioSourceManager()
-                    .setPlaylistPageCount(config.playlistPageCount)
-            )
-            log.info("Registered Bilibili source manager...")
+            val sourceManager = BilibiliAudioSourceManager(config)
+                .setPlaylistPageCount(config.playlistPageCount)
+            
+            manager.registerSourceManager(sourceManager)
+            log.info("Registered Bilibili source manager with ${if (config.isAuthenticated) "authentication" else "guest mode"}...")
         }
         return manager
     }

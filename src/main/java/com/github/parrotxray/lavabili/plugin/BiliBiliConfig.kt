@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 @Component
 data class BiliBiliConfig(
     val sources: Sources = Sources(),
-    val playlistPageCount: Int = -1
+    val playlistPageCount: Int = -1,
     val authentication: Authentication = Authentication()
 ) {
     data class Sources(
