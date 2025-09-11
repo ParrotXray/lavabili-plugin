@@ -19,7 +19,7 @@ class LavabiliPlugin(private val config: BilibiliConfig) : AudioPlayerManagerCon
                 log.info("Bilibili authentication: DISABLED (guest mode)")
             }
 
-            log.debug("Playlist page count limit: ${if (config.playlistPageCount == -1) "unlimited" else config.playlistPageCount}")
+            log.debug("DEBUG: Playlist page count limit: ${if (config.playlistPageCount == -1) "unlimited" else config.playlistPageCount}")
         }
     }
 
@@ -29,7 +29,7 @@ class LavabiliPlugin(private val config: BilibiliConfig) : AudioPlayerManagerCon
                 .setPlaylistPageCount(config.playlistPageCount)
             
             manager.registerSourceManager(sourceManager)
-            log.info("Registered Bilibili audio source manager with ${if (config.isAuthenticated) "auth" else "guest mode"}...")
+            log.info("Registered Bilibili audio source manager...")
         }
         return manager
     }
