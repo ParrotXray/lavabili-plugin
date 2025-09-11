@@ -29,7 +29,7 @@ class LavabiliPlugin(private val config: BilibiliConfig) : AudioPlayerManagerCon
                 .setPlaylistPageCount(config.playlistPageCount)
             
             manager.registerSourceManager(sourceManager)
-            log.info("Registered Bilibili source manager with ${if (config.isAuthenticated) "auth" else "guest mode"}...")
+            log.info("Registered Bilibili audio source manager with ${if (config.isAuthenticated) "auth" else "guest mode"}...")
         }
         return manager
     }
