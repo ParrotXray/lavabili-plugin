@@ -13,6 +13,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist
 import com.github.parrotxray.lavabili.plugin.LavabiliPlugin
+import com.github.parrotxray.lavabili.plugin.BiliBiliConfig
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.slf4j.Logger
@@ -22,7 +23,7 @@ import java.io.DataOutput
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-class BilibiliAudioSourceManager : AudioSourceManager {
+class BilibiliAudioSourceManager(private val config: BiliBiliConfig? = null) : AudioSourceManager {
     val log: Logger = LoggerFactory.getLogger(LavabiliPlugin::class.java)
 
     val httpInterface: HttpInterface
@@ -30,8 +31,15 @@ class BilibiliAudioSourceManager : AudioSourceManager {
 
     init {
         val httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager()
-        httpInterfaceManager.setHttpContextFilter(BilibiliHttpContextFilter())
+        // 传入配置给 HttpContextFilter
+        httpInterfaceManager.setHttpContextFilter(BilibiliHttpContextFilter(config))
         httpInterface = httpInterfaceManager.`interface`
+        
+        if (config?.isAuthenticated == true) {
+            log.info("Bilibili authentication enabled with SESSDATA: ${config.auth.sessdata.take(8)}...")
+        } else {
+            log.info("Bilibili running in guest mode (no authentication)")
+        }
     }
 
     override fun getSourceName(): String? {
@@ -82,7 +90,16 @@ class BilibiliAudioSourceManager : AudioSourceManager {
 
                     val statusCode = responseJson.get("code").`as`(Int::class.java)
                     log.debug("DEBUG: statusCode: $statusCode")
+                    
                     if (statusCode != 0) {
+                        val message = responseJson.get("message").text() ?: "Unknown error"
+                        log.warn("Failed to load video: $message (code: $statusCode)")
+
+                        if (statusCode == -403 || statusCode == -404) {
+                            if (!config?.isAuthenticated!!) {
+                                log.warn("Video may require login. Try configuring authentication.")
+                            }
+                        }
                         return AudioReference.NO_TRACK
                     }
 
@@ -113,6 +130,8 @@ class BilibiliAudioSourceManager : AudioSourceManager {
 
                     val statusCode = responseJson.get("code").`as`(Int::class.java)
                     if (statusCode != 0) {
+                        val message = responseJson.get("message").text() ?: "Unknown error"
+                        log.warn("Failed to load audio: $message (code: $statusCode)")
                         return AudioReference.NO_TRACK
                     }
 
@@ -131,7 +150,15 @@ class BilibiliAudioSourceManager : AudioSourceManager {
         return try {
             val encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8.toString())
 
-            val searchUrl = "https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
+            val searchUrl = if (config?.isAuthenticated == true) {
+                "https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
+            } else {
+                "https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
+            }
+
+            // val searchUrl = "https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
+
+            // val searchUrl = "https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
             
             log.debug("DEBUG: Bilibili search URL: $searchUrl")
             
@@ -143,6 +170,15 @@ class BilibiliAudioSourceManager : AudioSourceManager {
             if (statusCode != 0) {
                 val message = responseJson.get("message").text() ?: "Unknown error"
                 log.warn("Bilibili search failed with status code: $statusCode, message: $message")
+                
+                when (statusCode) {
+                    -412 -> {
+                        log.error("Search blocked (-412): Need cookies. ${if (!config?.isAuthenticated!!) "Configure authentication" else "Cookies may be expired"}")
+                    }
+                    -403 -> log.error("Access forbidden (-403): Rate limited or banned")
+                    -400 -> log.error("Bad request (-400): Invalid parameters")
+                }
+                
                 return BasicAudioPlaylist("Bilibili Search Results", emptyList(), null, true)
             }
             
@@ -248,6 +284,7 @@ class BilibiliAudioSourceManager : AudioSourceManager {
         return this
     }
 
+    // 其他方法保持不变...
     private fun loadVideo(trackData: JsonBrowser): AudioTrack {
         val bvid = trackData.get("bvid").`as`(String::class.java)
 
