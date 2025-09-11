@@ -218,8 +218,14 @@ https://www.bilibili.com/audio/am789012
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `sources.enable` | Boolean | `true` | Enable/disable Bilibili source |
+| `enabled` | Boolean | `false` | Enable/disable Bilibili source |
 | `playlistPageCount` | Integer | `-1` | Limit playlist pages (-1 = no limit) |
+| `auth.enabled` | Boolean | `false` | Enable login authentication |
+| `auth.sessdata` | String | `""` | Bilibili session token |
+| `auth.biliJct` | String | `""` | CSRF protection token |
+| `auth.dedeUserId` | String | `""` | User ID |
+| `auth.buvid3` | String | `""` | Device identifier |
+| `auth.buvid4` | String | `""` | Device identifier |
 
 ## Contributing
 
