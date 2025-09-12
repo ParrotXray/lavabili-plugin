@@ -13,8 +13,8 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 class BilibiliCookieExtractor:
     def __init__(self):
-        self.driver = None
-        self.console = Console(log_time=True, soft_wrap=True, log_time_format="[%H:%M:%S.%f]")
+        self.driver: webdriver.Chrome = None
+        self.console: Console = Console(log_time=True, soft_wrap=True, log_time_format="[%H:%M:%S.%f]")
         self.setup_driver()
         
     def is_browser_alive(self):
@@ -81,8 +81,8 @@ class BilibiliCookieExtractor:
         except Exception as e:
             self.console.log(f"Error during login process: {e}")
             return False
-    
-    def wait_for_login(self, timeout=300):
+
+    def wait_for_login(self, timeout: int = 300):
         self.console.log(f"Waiting for login completion (max {timeout} seconds)...")
         
         start_time = time.time()
