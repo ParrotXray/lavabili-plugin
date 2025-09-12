@@ -51,44 +51,16 @@ plugins:
 
 For Reference: https://nemo2011.github.io/bilibili-api/#/get-credential
 
-### Quick Method (Browser Console)
-
-1. Login to [bilibili.com](https://www.bilibili.com)
-2. Press `F12` and go to `Console` tab
-3. Run this script:
-
-```javascript
-function getBilibiliCookies() {
-    const cookieNames = ['SESSDATA', 'bili_jct', 'DedeUserID', 'buvid3', 'buvid4'];
-    const cookies = {};
-    
-    const fullCookie = document.cookie;
-    console.log('Full cookie string: ', fullCookie);
-    
-    cookieNames.forEach(name => {
-        const regex = new RegExp(`(?:^|; )${name}=([^;]*)`);
-        const match = fullCookie.match(regex);
-        cookies[name] = match ? decodeURIComponent(match[1]) : '';
-    });
-    
-    console.log('Bilibili Cookies:');
-    console.log('SESSDATA:', cookies.SESSDATA);
-    console.log('bili_jct:', cookies.bili_jct);
-    console.log('DedeUserID:', cookies.DedeUserID);
-    console.log('buvid3:', cookies.buvid3);
-    console.log('buvid4:', cookies.buvid4);
-}
-
-getBilibiliCookies();
-```
+### Quick Method (Python Script)
 
 ### Manual Method (Browser DevTools)
 
 1. Login to [bilibili.com](https://www.bilibili.com)
-2. Press `F12` → `Network` tab → Refresh page
+2. Press `F12` → `Application` tab → find `Cookie` in the `Storage` tab
 3. Find `www.bilibili.com` request
-4. Look for `Cookie` in Request Headers
-5. Extract values for `SESSDATA`, `bili_jct`, `DedeUserID`, `buvid3`, `buvid4`, and `DedeUserID`
+4. Extract values for `SESSDATA`, `bili_jct`, `DedeUserID`, `buvid3`, `buvid4`, and `DedeUserID`
+5. find `Local storage` in the `Storage` tab
+6. Extract values for `ac_time_value`
 
 **⚠️ Security Warning**: Never share your cookies - they're equivalent to your login credentials!
 
