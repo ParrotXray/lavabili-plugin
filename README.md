@@ -55,7 +55,7 @@ For Reference: https://nemo2011.github.io/bilibili-api/#/get-credential
 1. **Clone the repository**
    ```bash
    git clone https://github.com/ParrotXray/lavabili-plugin.git
-   cd lavabili-plugin/cookie_generator
+   cd lavabili-plugin/cookie_extraction
    ```
 
 2. **Install dependencies**
