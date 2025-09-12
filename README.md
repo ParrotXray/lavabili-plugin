@@ -52,6 +52,31 @@ plugins:
 For Reference: https://nemo2011.github.io/bilibili-api/#/get-credential
 
 ### Quick Method (Python Script)
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/ParrotXray/lavabili-plugin.git
+   cd lavabili-plugin/cookie_generator
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Linux/macOS
+   pip3 install --no-cache-dir -r requirements.txt --upgrade
+  
+   # Windows
+   pip install --no-cache-dir -r requirements.txt --upgrade
+   ```
+
+3. **Execute the script**
+   ```bash
+   # Linux/macOS
+   python3 get_cookie.py
+  
+   # Windows
+   python get_cookie.py
+   ```
+
+4. **Follow the steps to log in and obtain information**
 
 ### Manual Method (Browser DevTools)
 
