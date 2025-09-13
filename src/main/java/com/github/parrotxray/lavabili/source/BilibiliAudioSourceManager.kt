@@ -22,6 +22,7 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.regex.Pattern
 
 class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : AudioSourceManager {
     val log: Logger = LoggerFactory.getLogger(LavabiliPlugin::class.java)
@@ -64,7 +65,11 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
                 "video" -> {
                     log.debug("DEBUG: type: video")
                     val bvid = matcher.group("id")
-                    val page = (matcher.group("page")?.toInt() ?: 1) - 1
+                    
+                    // Enhanced page parameter extraction
+                    val page = extractPageParameter(resolvedUrl)
+                    log.debug("DEBUG: extracted page parameter: $page")
+                    
                     val type: String? = when (matcher.group("audioType")) {
                         "av" -> "av"
                         else -> null
@@ -98,11 +103,11 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
 
                     val trackData = responseJson.get("data")
                     val pagesCount = trackData.get("pages").values().size
-                    val hasPageParameter = matcher.group("page") != null
+                    val hasPageParameter = page > 0
                     
                     return if (pagesCount > 1) {
                         if (hasPageParameter) {
-                            loadVideoFromAnthology(trackData, page)
+                            loadVideoFromAnthology(trackData, page - 1) // Convert to 0-based index
                         } else {
                             loadVideoAnthology(trackData, 0)
                         }
@@ -139,6 +144,18 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
         return null
     }
 
+    private fun extractPageParameter(url: String): Int {
+        return try {
+            // Look for p= parameter in query string
+            val pageRegex = Regex("[?&]p=(\\d+)")
+            val matchResult = pageRegex.find(url)
+            matchResult?.groupValues?.get(1)?.toInt() ?: 0
+        } catch (e: Exception) {
+            log.debug("Failed to extract page parameter from URL: $url", e)
+            0
+        }
+    }
+
     private fun searchBilibili(query: String): AudioPlaylist? {
         return try {
             val encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8.toString())
@@ -149,10 +166,6 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
                 "https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
             }
 
-            // val searchUrl = "https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
-
-            // val searchUrl = "https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=$encodedQuery&page=1&page_size=20&order=totalrank&duration=0&tids_1=0"
-            
             log.debug("DEBUG: Bilibili search URL: $searchUrl")
             
             val response = httpInterface.execute(HttpGet(searchUrl))
@@ -277,7 +290,6 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
         return this
     }
 
-    // 其他方法保持不变...
     private fun loadVideo(trackData: JsonBrowser): AudioTrack {
         val bvid = trackData.get("bvid").`as`(String::class.java)
 
@@ -479,15 +491,10 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
     companion object {
         const val BASE_URL = "https://api.bilibili.com/"
         
-        // Enhanced regex pattern to support multiple URL formats including b23.tv and mobile URLs
-        private val URL_PATTERN = Regex(
-            "^https?:\\/\\/(?:(?:www|m)\\.)?(?:bilibili\\.com|b23\\.tv)\\/(?<type>video|audio)\\/(?<id>(?:(?<audioType>am|au|av)?(?<audioId>[0-9]+))|[A-Za-z0-9]+)\\/?(?:(?:\\?p=(?<page>[\\d]+)(?:&.+)?)?|(?:\\?.*)?)\$"
-        ).toPattern()
-        
-        // Additional pattern for b23.tv short URLs (fallback)
-        private val SHORT_URL_PATTERN = Regex(
-            "^https?:\\/\\/b23\\.tv\\/[A-Za-z0-9]+\\/?(?:\\?.*)?$"
-        ).toPattern()
+        // Simplified pattern - we'll handle page parameter extraction separately
+        private val URL_PATTERN = Pattern.compile(
+            "^https?://(?:(?:www|m)\\.)?(?:bilibili\\.com|b23\\.tv)/(?<type>video|audio)/(?<id>(?:(?<audioType>am|au|av)?(?<audioId>[0-9]+))|[A-Za-z0-9]+)/?(?:\\?.*)?$"
+        )
 
         private fun getVideoUrl(id: String, page: Int? = null): String {
             return "https://www.bilibili.com/video/$id${if (page != null) "?p=$page" else ""}"
