@@ -9,8 +9,11 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor
 import com.github.parrotxray.lavabili.source.BilibiliAudioSourceManager.Companion.BASE_URL
+import com.github.parrotxray.lavabili.plugin.LavabiliPlugin
 import org.apache.http.client.methods.HttpGet
 import java.net.URI
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class BilibiliAudioTrack(
     audioTrackInfo: AudioTrackInfo,
@@ -19,6 +22,7 @@ class BilibiliAudioTrack(
     val cid: Long?,
     private val sourceManager: BilibiliAudioSourceManager
 ) : DelegatedAudioTrack(audioTrackInfo) {
+    val log: Logger = LoggerFactory.getLogger(LavabiliPlugin::class.java)
 
     override fun process(executor: LocalAudioTrackExecutor) {
         val stream = PersistentHttpStream(

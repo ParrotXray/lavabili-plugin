@@ -17,7 +17,8 @@ data class BilibiliConfig(
         var biliJct: String = "",
         var dedeUserId: String = "",
         var buvid3: String = "",
-        var buvid4: String = ""
+        var buvid4: String = "",
+        var acTimeValue: String = ""
     )
 
     val activeSources: List<String>
@@ -25,4 +26,7 @@ data class BilibiliConfig(
 
     val isAuthenticated: Boolean
         get() = auth.enabled && auth.sessdata.isNotEmpty()
+        
+    val canRefreshCookies: Boolean
+        get() = isAuthenticated && auth.acTimeValue.isNotEmpty()
 }

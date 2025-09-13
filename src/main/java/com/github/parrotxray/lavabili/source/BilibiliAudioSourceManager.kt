@@ -14,6 +14,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist
 import com.github.parrotxray.lavabili.plugin.LavabiliPlugin
 import com.github.parrotxray.lavabili.plugin.BilibiliConfig
+import com.github.parrotxray.lavabili.util.CookieRefreshManager
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.slf4j.Logger
@@ -32,8 +33,44 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
 
     init {
         val httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager()
-        httpInterfaceManager.setHttpContextFilter(BilibiliHttpContextFilter(config))
+
+        val httpContextFilter = BilibiliHttpContextFilter(config, null)
+        httpInterfaceManager.setHttpContextFilter(httpContextFilter)
         httpInterface = httpInterfaceManager.`interface`
+
+        val updatedFilter = BilibiliHttpContextFilter(config, httpInterface)
+        httpInterfaceManager.setHttpContextFilter(updatedFilter)
+        
+        // Check and refresh cookie state on startup
+        when {
+            config?.canRefreshCookies == true -> {
+                // log.info("Automatic cookie refresh is enabled (ac_time_value: ${config.auth.acTimeValue.take(8)}***)")
+                
+                // Check cookie state on startup
+                try {
+                    val cookieRefreshManager = CookieRefreshManager(config, httpInterface)
+                    if (cookieRefreshManager.shouldRefreshCookies()) {
+                        log.info("Detected cookies need refresh on startup, starting automatic refresh...")
+                        val result = cookieRefreshManager.refreshCookies()
+                        if (result.success) {
+                            log.info("Cookie refreshed successfully! Please check the new configuration in the logs and restart the service to use the new cookie.")
+                        } else {
+                            log.warn("Cookie refresh failed: ${result.message}")
+                        }
+                    } else {
+                        log.info("Cookie check: current cookie state is normal")
+                    }
+                } catch (e: Exception) {
+                    log.warn("Failed to check cookie state: ${e.message}")
+                }
+            }
+            config?.isAuthenticated == true -> {
+                log.info("Using fixed cookie authentication mode (ac_time_value not configured, cannot auto-refresh)")
+            }
+            // else -> {
+            //     log.info("Authentication is not set. Use guest mode.")
+            // }
+        }
     }
 
     override fun getSourceName(): String? {
@@ -93,9 +130,20 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
                         val message = responseJson.get("message").text() ?: "Unknown error"
                         log.warn("Failed to load video: $message (code: $statusCode)")
 
-                        if (statusCode == -403 || statusCode == -404) {
-                            if (!config?.isAuthenticated!!) {
-                                log.warn("Video may require login. Try configuring authentication.")
+                        // Enhanced error handling with cookie refresh suggestions
+                        when (statusCode) {
+                            -403, -404 -> {
+                                when {
+                                    config?.canRefreshCookies == true -> {
+                                        log.warn("Video access failed, cookies may need refresh (auto-refresh enabled)")
+                                    }
+                                    config?.isAuthenticated == true -> {
+                                        log.warn("Video access failed, please check if cookies have expired (auto-refresh not configured)")
+                                    }
+                                    else -> {
+                                        log.warn("Video may require login, please configure authentication info")
+                                    }
+                                }
                             }
                         }
                         return AudioReference.NO_TRACK

@@ -45,6 +45,7 @@ plugins:
       dedeUserId: "paste your dedeUserId here if applicable"
       buvid3: "paste your buvid3 here if applicable"
       buvid4: "paste your buvid4 here if applicable"
+      acTimeValue: "paste your buvid4 here if applicable" # Used to refresh cookies after the login status expires. Without this value, you can only log in again. If you do not need to refresh the credentials, you do not need to provide it
 ```
 
 ## Getting Bilibili Cookies for Authentication

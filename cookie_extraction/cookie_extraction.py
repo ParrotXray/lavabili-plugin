@@ -177,13 +177,13 @@ class BilibiliCookieExtractor:
                         self.console.log("ac_time_value not found, but does not affect basic functionality")
 
 
-                    self.console.log("Security Warning: Never share your cookies - they're equivalent to your login credentials!")
-                    self.console.log(f"SESSDATA: {data.get('SESSDATA')}")
-                    self.console.log(f"bili_jct: {data.get('bili_jct')}")
-                    self.console.log(f"DedeUserID: {data.get('DedeUserID')}")
-                    self.console.log(f"buvid3: {data.get('buvid3')}")
-                    self.console.log(f"buvid4: {data.get('buvid4')}")
-                    self.console.log(f"ac_time_value: {data.get('ac_time_value')}")
+                    print("Security Warning: Never share your cookies - they're equivalent to your login credentials!")
+                    print(f"SESSDATA: {data.get('SESSDATA')}")
+                    print(f"bili_jct: {data.get('bili_jct')}")
+                    print(f"DedeUserID: {data.get('DedeUserID')}")
+                    print(f"buvid3: {data.get('buvid3')}")
+                    print(f"buvid4: {data.get('buvid4')}")
+                    print(f"ac_time_value: {data.get('ac_time_value')}")
                     
                     return True
                 else:

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.parrotxray.lavabili"
-version = "1.1.1"
+version = "1.2.0"
 
 lavalinkPlugin {
     name = "lavabili-plugin"
