@@ -235,7 +235,7 @@ https://www.bilibili.com/audio/am789012
 Contributions are welcome! Please feel free to submit issues, fork the repository, and create pull requests.
 
 1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+2. Create your feature branch (`git switch -c feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
