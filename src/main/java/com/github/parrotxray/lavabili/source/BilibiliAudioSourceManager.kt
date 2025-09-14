@@ -82,6 +82,11 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
         
         // Handle bilisearch: prefix for search functionality
         if (reference.identifier.startsWith("bilisearch:")) {
+            if (config?.allowSearch != true) {
+                log.debug("Bilibili search is disabled in configuration")
+                return BasicAudioPlaylist("Bilibili Search Disabled", emptyList(), null, true)
+            }
+            
             val searchQuery = reference.identifier.substring("bilisearch:".length).trim()
             log.debug("DEBUG: Bilibili search query: $searchQuery")
             return searchBilibili(searchQuery)
@@ -128,24 +133,24 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
                     
                     if (statusCode != 0) {
                         val message = responseJson.get("message").text() ?: "Unknown error"
-                        log.warn("Failed to load video: $message (code: $statusCode)")
+                        log.debug("Failed to load video: $message (code: $statusCode)")
 
                         // Enhanced error handling with cookie refresh suggestions
-                        when (statusCode) {
-                            -403, -404 -> {
-                                when {
-                                    config?.canRefreshCookies == true -> {
-                                        log.warn("Video access failed, cookies may need refresh (auto-refresh enabled)")
-                                    }
-                                    config?.isAuthenticated == true -> {
-                                        log.warn("Video access failed, please check if cookies have expired (auto-refresh not configured)")
-                                    }
-                                    else -> {
-                                        log.warn("Video may require login, please configure authentication info")
-                                    }
-                                }
-                            }
-                        }
+                        // when (statusCode) {
+                        //     -403, -404 -> {
+                        //         when {
+                        //             config?.canRefreshCookies == true -> {
+                        //                 log.warn("Video access failed, cookies may need refresh (auto-refresh enabled)")
+                        //             }
+                        //             config?.isAuthenticated == true -> {
+                        //                 log.warn("Video access failed, please check if cookies have expired (auto-refresh not configured)")
+                        //             }
+                        //             else -> {
+                        //                 log.warn("Video may require login, please configure authentication info")
+                        //             }
+                        //         }
+                        //     }
+                        // }
                         return AudioReference.NO_TRACK
                     }
 

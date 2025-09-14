@@ -20,6 +20,7 @@ class LavabiliPlugin(private val config: BilibiliConfig) : AudioPlayerManagerCon
             }
 
             log.debug("DEBUG: Playlist page count limit: ${if (config.playlistPageCount == -1) "unlimited" else config.playlistPageCount}")
+            log.debug("DEBUG: Search functionality: ${if (config.allowSearch) "enabled" else "disabled"}")
         }
     }
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component
 @Component
 data class BilibiliConfig(
     var enabled: Boolean = false,
+    var allowSearch: Boolean = true,
     var playlistPageCount: Int = -1,
     var auth: Authentication = Authentication()
 ) {

@@ -36,6 +36,7 @@ lavalink:
 plugins:
   lavabili:
     enabled: true
+    allowSearch: true      # Whether "bilisearch:" can be used
     playlistPageCount: -1  # -1 means no limit, or set a specific number
     auth:
       enabled: false # setting "enabled: true" is the bare minimum to get Authentication working.
@@ -219,6 +220,7 @@ https://www.bilibili.com/audio/am789012
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enabled` | Boolean | `false` | Enable/disable Bilibili source |
+| `allowSearch` | Boolean | `true` | Whether "bilisearch:" can be used |
 | `playlistPageCount` | Integer | `-1` | Limit playlist pages (-1 = no limit) |
 | `auth.enabled` | Boolean | `false` | Enable login authentication |
 | `auth.sessdata` | String | `""` | Bilibili session token |
@@ -226,6 +228,7 @@ https://www.bilibili.com/audio/am789012
 | `auth.dedeUserId` | String | `""` | User ID |
 | `auth.buvid3` | String | `""` | Device identifier |
 | `auth.buvid4` | String | `""` | Device identifier |
+| `auth.acTimeValue` | String | `""` | Refresh token for automatic cookie refresh |
 
 ## Contributing
 

@@ -132,9 +132,9 @@ class BilibiliHttpContextFilter(
         // Check if the response contains an authentication error
         if (response.statusLine.statusCode == 401 || 
             response.statusLine.statusCode == 403) {
-            
-            log.debug("Received authentication error response (${response.statusLine.statusCode}), cookies may need to be refreshed")
-            
+
+            log.warn("Received authentication error response (${response.statusLine.statusCode}), cookies may need to be refreshed")
+
             if (config?.canRefreshCookies == true) {
                 val refreshManager = getCookieRefreshManager()
                 if (refreshManager != null) {
