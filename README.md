@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Lavalink-v4-blue" alt="Lavalink Version">
   <img src="https://img.shields.io/badge/Java-17+-orange" alt="Java Version">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
-  <img src="https://jitpack.io/v/ParrotXray/Lavabili.svg" alt="JitPack Version">
+  <img src="https://jitpack.io/v/ParrotXray/lavabili-plugin.svg" alt="JitPack Version">
 </p>
 
 A Lavalink plugin that adds **Bilibili** as an audio source, rebuilt for the latest Lavalink v4. This plugin is based on [hoyiliang/lavabili-plugin](https://github.com/hoyiliang/lavabili-plugin) with enhanced features and bug fixes.
