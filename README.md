@@ -72,10 +72,10 @@ For Reference: https://nemo2011.github.io/bilibili-api/#/get-credential
 3. **Execute the script**
    ```bash
    # Linux/macOS
-   python3 get_cookie.py
+   python3 cookie_extraction.py
   
    # Windows
-   python get_cookie.py
+   python cookie_extraction.py
    ```
 
 4. **Follow the steps to log in and obtain information**
