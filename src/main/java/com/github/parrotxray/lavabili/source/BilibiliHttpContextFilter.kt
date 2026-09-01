@@ -9,11 +9,15 @@ import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.*
-import java.util.concurrent.atomic.AtomicReference 
+import java.util.concurrent.atomic.AtomicReference
 
 class BilibiliHttpContextFilter(
     private val config: BilibiliConfig? = null,
+    // Resolved once per source manager instance (see BilibiliAudioSourceManager) and
+    // reused for every request here, matching how a real device keeps a stable
+    // fingerprint instead of a new one per call.
+    private val buvid3: String,
+    private val buvid4: String,
     private val httpInterface: com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface? = null
 ) : HttpContextFilter {
 
@@ -25,36 +29,18 @@ class BilibiliHttpContextFilter(
 
     private fun getCookieRefreshManager(): CookieRefreshManager? {
         if (config == null || httpInterface == null) return null
-        
+
         return cookieRefreshManager.updateAndGet { current ->
             current ?: CookieRefreshManager(config, httpInterface)
         }
     }
-    
-    private fun generateBuvid3(): String {
-        val chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        val random = Random()
-        val length = 32
-        return (1..length)
-            .map { chars[random.nextInt(chars.length)] }
-            .joinToString("")
-    }
-    
-    private fun generateBuvid4(): String {
-        val chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        val random = Random()
-        val length = 36
-        return (1..length)
-            .map { chars[random.nextInt(chars.length)] }
-            .joinToString("")
-    }
 
     override fun onContextOpen(context: HttpClientContext) {
-        // 
+        //
     }
 
     override fun onContextClose(context: HttpClientContext) {
-        // 
+        //
     }
 
     override fun onRequest(context: HttpClientContext, request: HttpUriRequest, isRepetition: Boolean) {
@@ -63,21 +49,20 @@ class BilibiliHttpContextFilter(
         request.setHeader("Origin", "https://www.bilibili.com")
         request.setHeader("Accept", "application/json, text/plain, */*")
         request.setHeader("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
-        // request.setHeader("Accept-Encoding", "gzip, deflate, br")
 
         val cookieBuilder = StringBuilder()
-        
+
         if (config?.isAuthenticated == true) {
             val auth = config.auth
 
             if (auth.sessdata.isNotEmpty()) {
                 cookieBuilder.append("SESSDATA=${auth.sessdata}; ")
             }
-            
+
             if (auth.biliJct.isNotEmpty()) {
                 cookieBuilder.append("bili_jct=${auth.biliJct}; ")
             }
-            
+
             if (auth.dedeUserId.isNotEmpty()) {
                 cookieBuilder.append("DedeUserID=${auth.dedeUserId}; ")
             }
@@ -85,21 +70,12 @@ class BilibiliHttpContextFilter(
             if (auth.acTimeValue.isNotEmpty()) {
                 cookieBuilder.append("ac_time_value=${auth.acTimeValue}; ")
             }
-
-            val buvid3 = if (auth.buvid3.isNotEmpty()) auth.buvid3 else generateBuvid3()
-            val buvid4 = if (auth.buvid4.isNotEmpty()) auth.buvid4 else generateBuvid4()
-            
-            cookieBuilder.append("buvid3=${buvid3}; ")
-            cookieBuilder.append("buvid4=${buvid4}; ")
-        } else {
-            val buvid3 = generateBuvid3()
-            val buvid4 = generateBuvid4()
-            cookieBuilder.append("buvid3=${buvid3}; ")
-            cookieBuilder.append("buvid4=${buvid4}; ")
         }
-        
+
+        cookieBuilder.append("buvid3=${buvid3}; ")
+        cookieBuilder.append("buvid4=${buvid4}; ")
         cookieBuilder.append("CURRENT_FNVAL=4048")
-        
+
         request.setHeader("Cookie", cookieBuilder.toString())
 
         if (request.uri.host?.contains("api.bilibili.com") == true) {
@@ -114,7 +90,7 @@ class BilibiliHttpContextFilter(
                 request.setHeader("Sec-Fetch-Site", "same-site")
                 request.setHeader("Referer", "https://search.bilibili.com/")
             }
-            
+
             if (config?.isAuthenticated == true && config.auth.biliJct.isNotEmpty()) {
                 val uri = request.uri.toString()
                 if (uri.contains("/web-interface/") || uri.contains("/pgc/player/")) {
@@ -129,8 +105,11 @@ class BilibiliHttpContextFilter(
         request: HttpUriRequest,
         response: HttpResponse
     ): Boolean {
-        // Check if the response contains an authentication error
-        if (response.statusLine.statusCode == 401 || 
+        if (response.statusLine.statusCode == 412) {
+            log.warn("Received HTTP 412 from bilibili (request blocked by risk control) for ${request.uri}")
+        }
+
+        if (response.statusLine.statusCode == 401 ||
             response.statusLine.statusCode == 403) {
 
             log.warn("Received authentication error response (${response.statusLine.statusCode}), cookies may need to be refreshed")

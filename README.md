@@ -12,10 +12,12 @@ A Lavalink plugin that adds **Bilibili** as an audio source, rebuilt for the lat
 ## Features
 
 - **Audio Playback**: Stream audio from Bilibili videos
-- **Search Support**: Search Bilibili videos using `bilisearch:` prefix
+- **Search Support**: Search Bilibili videos using `bilisearch:` prefix, or through Lavalink's [LavaSearch](https://github.com/topi314/LavaSearch) `/v4/search` REST endpoint
+- **Lyrics Support**: Fetch CC subtitles as lyrics through Lavalink's [LavaLyrics](https://github.com/topi314/LavaLyrics) `/v4/lyrics` REST endpoint
 - **Multi-part Videos**: Support for videos with multiple parts (`?p=` parameter)
 - **Playlist Support**: Handle Bilibili audio playlists
 - **Short URL Support**: Automatically resolve b23.tv short links
+- **Risk-control hardening**: WBI-signed requests with a device fingerprint and a stable per-instance `buvid3`/`buvid4`, plus a webpage-scrape fallback for video metadata, to reduce `-412` blocks
 
 ## Installation
 
@@ -36,7 +38,8 @@ lavalink:
 plugins:
   lavabili:
     enabled: true
-    allowSearch: true      # Whether "bilisearch:" can be used
+    allowSearch: true      # Whether "bilisearch:" can be used, and whether the LavaSearch manager is registered
+    allowLyrics: true       # Whether the LavaLyrics manager is registered
     playlistPageCount: -1  # -1 means no limit, or set a specific number
     auth:
       enabled: false # setting "enabled: true" is the bare minimum to get Authentication working.
@@ -112,6 +115,10 @@ https://www.bilibili.com/video/BV1NVWxeeEVJ
 # Search for videos
 bilisearch:your search query here
 ```
+
+The same `bilisearch:` query also works through Lavalink's `/v4/search` REST endpoint
+(LavaSearch), and CC subtitles for a loaded video track are available through
+`/v4/lyrics` (LavaLyrics).
 
 ### Short URLs
 
@@ -220,7 +227,8 @@ https://www.bilibili.com/audio/am789012
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enabled` | Boolean | `false` | Enable/disable Bilibili source |
-| `allowSearch` | Boolean | `true` | Whether "bilisearch:" can be used |
+| `allowSearch` | Boolean | `true` | Whether "bilisearch:" can be used, and whether the LavaSearch manager is registered |
+| `allowLyrics` | Boolean | `true` | Whether the LavaLyrics manager is registered |
 | `playlistPageCount` | Integer | `-1` | Limit playlist pages (-1 = no limit) |
 | `auth.enabled` | Boolean | `false` | Enable login authentication |
 | `auth.sessdata` | String | `""` | Bilibili session token |

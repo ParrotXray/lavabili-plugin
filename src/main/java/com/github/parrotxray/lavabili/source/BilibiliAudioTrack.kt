@@ -2,7 +2,6 @@ package com.github.parrotxray.lavabili.source
 
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager
-import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser
 import com.sedmelluq.discord.lavaplayer.tools.io.PersistentHttpStream
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
@@ -18,7 +17,7 @@ import org.slf4j.LoggerFactory
 class BilibiliAudioTrack(
     audioTrackInfo: AudioTrackInfo,
     val type: TrackType,
-    val /*hvid or sid*/ id: String,
+    val /*bvid or sid*/ id: String,
     val cid: Long?,
     private val sourceManager: BilibiliAudioSourceManager
 ) : DelegatedAudioTrack(audioTrackInfo) {
@@ -35,10 +34,9 @@ class BilibiliAudioTrack(
 
     private fun getPlaybackURL(): String = when (type) {
         TrackType.AUDIO -> {
-            val response = sourceManager.httpInterface.execute(
+            val responseJson = sourceManager.fetchJson(
                 HttpGet("${BASE_URL}audio/music-service-c/web/url?sid=$id&privilege=2&quality=2")
-            )
-            val responseJson = JsonBrowser.parse(response.entity.content)
+            ) ?: throw IllegalStateException("Empty response fetching Bilibili audio URL for $id")
 
             responseJson
                 .get("data")
@@ -46,10 +44,15 @@ class BilibiliAudioTrack(
                 .values()[0].`as`(String::class.java)
         }
         TrackType.VIDEO -> {
-            val response = sourceManager.httpInterface.execute(
-                HttpGet("${BASE_URL}x/player/playurl?bvid=$id&cid=$cid&fnval=16")
+            // WBI-signed with a device fingerprint, matching what a real player sends -
+            // the plain unsigned x/player/playurl endpoint is flagged by risk control
+            // (-412) much more aggressively.
+            val query = sourceManager.signWbi(
+                mapOf("bvid" to id, "cid" to cid.toString(), "fnval" to "16", "qn" to "120") + sourceManager.dmParams()
             )
-            val responseJson = JsonBrowser.parse(response.entity.content)
+            val responseJson = sourceManager.fetchJson(
+                HttpGet("${BASE_URL}x/player/wbi/playurl?$query")
+            ) ?: throw IllegalStateException("Empty response fetching Bilibili playurl for $id")
 
             responseJson.get("data").get("dash").get("audio")
                 .values()
