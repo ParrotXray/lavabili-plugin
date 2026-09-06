@@ -45,18 +45,35 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
 
     // Generated once per source manager instance (not per request) and reused for the
     // lifetime of this instance, matching how a real browser/device keeps a stable buvid
-    // instead of a new one per call.
-    private val resolvedBuvid3: String = config?.auth?.buvid3?.takeIf { it.isNotEmpty() } ?: "${UUID.randomUUID()}infoc"
-    private val resolvedBuvid4: String = config?.auth?.buvid4?.takeIf { it.isNotEmpty() } ?: "${UUID.randomUUID()}infoc"
+    // instead of a new one per call. Overwritten below with a server-issued pair from
+    // finger/spi unless the user pinned explicit values via config - bilibili's risk
+    // control increasingly rejects a purely client-generated buvid3/4 (see yt-dlp #14830).
+    private var resolvedBuvid3: String = config?.auth?.buvid3?.takeIf { it.isNotEmpty() } ?: "${UUID.randomUUID()}infoc"
+    private var resolvedBuvid4: String = config?.auth?.buvid4?.takeIf { it.isNotEmpty() } ?: "${UUID.randomUUID()}infoc"
+    private val autoManagedBuvid: Boolean = config?.auth?.buvid3.isNullOrEmpty() || config?.auth?.buvid4.isNullOrEmpty()
+
+    // Placeholder browser fingerprint cookie (buvid_fp) - bilibili computes the real one
+    // client-side in obfuscated JS with no public equivalent endpoint, so this just mirrors
+    // yt-dlp's own workaround of sending a stable, plausible-looking value.
+    private val resolvedBuvidFp: String = MessageDigest.getInstance("MD5")
+        .digest(UUID.randomUUID().toString().toByteArray(StandardCharsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
 
     init {
         val httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager()
 
-        val httpContextFilter = BilibiliHttpContextFilter(config, resolvedBuvid3, resolvedBuvid4, null)
-        httpInterfaceManager.setHttpContextFilter(httpContextFilter)
+        val bootstrapFilter = BilibiliHttpContextFilter(config, resolvedBuvid3, resolvedBuvid4, resolvedBuvidFp, autoManagedBuvid, null)
+        httpInterfaceManager.setHttpContextFilter(bootstrapFilter)
         httpInterface = httpInterfaceManager.`interface`
 
-        val updatedFilter = BilibiliHttpContextFilter(config, resolvedBuvid3, resolvedBuvid4, httpInterface)
+        if (autoManagedBuvid) {
+            fetchBuvidFromFingerSpi()?.let { (b3, b4) ->
+                resolvedBuvid3 = b3
+                resolvedBuvid4 = b4
+            }
+        }
+
+        val updatedFilter = BilibiliHttpContextFilter(config, resolvedBuvid3, resolvedBuvid4, resolvedBuvidFp, autoManagedBuvid, httpInterface)
         httpInterfaceManager.setHttpContextFilter(updatedFilter)
 
         // Check and refresh cookie state on startup
@@ -106,6 +123,24 @@ class BilibiliAudioSourceManager(private val config: BilibiliConfig? = null) : A
             log.warn("Failed to fetch/parse response from ${request.uri}: ${e.message}")
             null
         }
+    }
+
+    // Fetches a real, server-issued buvid3/buvid4 pair so this instance doesn't send
+    // bilibili a purely made-up fingerprint - see the comment on resolvedBuvid3/4 above.
+    private fun fetchBuvidFromFingerSpi(): Pair<String, String>? {
+        val json = fetchJson(HttpGet("${BASE_URL}x/frontend/finger/spi")) ?: return null
+
+        if (json.get("code").asLong(-1) != 0L) {
+            log.warn("finger/spi returned a non-zero code, falling back to a generated buvid3/4")
+            return null
+        }
+
+        val b3 = json.get("data").get("b_3").text()
+        val b4 = json.get("data").get("b_4").text()
+        if (b3.isNullOrEmpty() || b4.isNullOrEmpty()) return null
+
+        log.info("Fetched real buvid3/buvid4 from bilibili's finger/spi endpoint")
+        return b3 to b4
     }
 
     override fun loadItem(manager: AudioPlayerManager, reference: AudioReference): AudioItem? {
