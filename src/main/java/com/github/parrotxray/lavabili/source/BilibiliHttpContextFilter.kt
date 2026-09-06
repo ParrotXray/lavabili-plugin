@@ -1,29 +1,45 @@
 package com.github.parrotxray.lavabili.source
 
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools
 import com.github.parrotxray.lavabili.plugin.BilibiliConfig
 import com.github.parrotxray.lavabili.plugin.LavabiliPlugin
 import com.github.parrotxray.lavabili.util.CookieRefreshManager
 import org.apache.http.HttpResponse
+import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 class BilibiliHttpContextFilter(
     private val config: BilibiliConfig? = null,
-    // Resolved once per source manager instance (see BilibiliAudioSourceManager) and
-    // reused for every request here, matching how a real device keeps a stable
-    // fingerprint instead of a new one per call.
-    private val buvid3: String,
-    private val buvid4: String,
+    initialBuvid3: String,
+    initialBuvid4: String,
+    // Bilibili's JS-computed browser fingerprint cookie. There's no public endpoint that
+    // issues a real one, so this is a stable per-instance placeholder (matching yt-dlp's
+    // own workaround) - better than sending no buvid_fp at all.
+    private val buvidFp: String,
+    // Only auto-refresh buvid3/4 on a 412 when they weren't explicitly pinned via config.
+    private val autoManagedBuvid: Boolean = true,
     private val httpInterface: com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface? = null
 ) : HttpContextFilter {
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(LavabiliPlugin::class.java)
+        const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        private const val BUVID_REFRESH_MIN_INTERVAL_MS = 30_000L
     }
+
+    // Resolved once per source manager instance (see BilibiliAudioSourceManager) and
+    // reused for every request here, matching how a real device keeps a stable
+    // fingerprint instead of a new one per call - refreshed only on a 412 (see below).
+    private val buvid3: AtomicReference<String> = AtomicReference(initialBuvid3)
+    private val buvid4: AtomicReference<String> = AtomicReference(initialBuvid4)
+    private val lastBuvidRefreshAttempt: AtomicLong = AtomicLong(0L)
 
     private val cookieRefreshManager: AtomicReference<CookieRefreshManager?> = AtomicReference(null)
 
@@ -45,7 +61,7 @@ class BilibiliHttpContextFilter(
 
     override fun onRequest(context: HttpClientContext, request: HttpUriRequest, isRepetition: Boolean) {
         request.setHeader("Referer", "https://www.bilibili.com/")
-        request.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        request.setHeader("User-Agent", USER_AGENT)
         request.setHeader("Origin", "https://www.bilibili.com")
         request.setHeader("Accept", "application/json, text/plain, */*")
         request.setHeader("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
@@ -72,8 +88,9 @@ class BilibiliHttpContextFilter(
             }
         }
 
-        cookieBuilder.append("buvid3=${buvid3}; ")
-        cookieBuilder.append("buvid4=${buvid4}; ")
+        cookieBuilder.append("buvid3=${buvid3.get()}; ")
+        cookieBuilder.append("buvid4=${buvid4.get()}; ")
+        cookieBuilder.append("buvid_fp=${buvidFp}; ")
         cookieBuilder.append("CURRENT_FNVAL=4048")
 
         request.setHeader("Cookie", cookieBuilder.toString())
@@ -107,6 +124,10 @@ class BilibiliHttpContextFilter(
     ): Boolean {
         if (response.statusLine.statusCode == 412) {
             log.warn("Received HTTP 412 from bilibili (request blocked by risk control) for ${request.uri}")
+
+            if (autoManagedBuvid) {
+                refreshBuvidFromFingerSpi()
+            }
         }
 
         if (response.statusLine.statusCode == 401 ||
@@ -139,5 +160,42 @@ class BilibiliHttpContextFilter(
 
     override fun onRequestException(context: HttpClientContext?, request: HttpUriRequest, error: Throwable): Boolean {
         return false
+    }
+
+    // Bilibili's risk control increasingly rejects requests carrying a buvid3/buvid4
+    // that it never actually issued (see yt-dlp issue #14830 / PR #16889), so on a 412
+    // we re-fetch a server-issued pair from x/frontend/finger/spi rather than keep
+    // retrying with the same (possibly already-flagged) values. Throttled since a burst
+    // of 412s from the same underlying cause shouldn't hammer the endpoint repeatedly.
+    private fun refreshBuvidFromFingerSpi() {
+        if (httpInterface == null) return
+
+        val now = System.currentTimeMillis()
+        val last = lastBuvidRefreshAttempt.get()
+        if (now - last < BUVID_REFRESH_MIN_INTERVAL_MS) return
+        if (!lastBuvidRefreshAttempt.compareAndSet(last, now)) return
+
+        try {
+            val request = HttpGet("https://api.bilibili.com/x/frontend/finger/spi")
+            request.setHeader("User-Agent", USER_AGENT)
+            val response = httpInterface.execute(request)
+            if (!HttpClientTools.isSuccessWithContent(response.statusLine.statusCode)) {
+                log.debug("finger/spi refresh got HTTP ${response.statusLine.statusCode}")
+                return
+            }
+
+            val json = JsonBrowser.parse(response.entity.content)
+            if (json.get("code").asLong(-1) != 0L) return
+
+            val newBuvid3 = json.get("data").get("b_3").text()
+            val newBuvid4 = json.get("data").get("b_4").text()
+            if (!newBuvid3.isNullOrEmpty() && !newBuvid4.isNullOrEmpty()) {
+                buvid3.set(newBuvid3)
+                buvid4.set(newBuvid4)
+                log.info("Refreshed buvid3/buvid4 from finger/spi after HTTP 412")
+            }
+        } catch (e: Exception) {
+            log.debug("Failed to refresh buvid3/buvid4 after 412: ${e.message}")
+        }
     }
 }
