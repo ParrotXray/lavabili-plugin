@@ -12,9 +12,15 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
-import java.util.concurrent.ThreadLocalRandom
+import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.spec.MGF1ParameterSpec
+import java.security.spec.X509EncodedKeySpec
+import java.util.Base64
 import java.util.regex.Pattern
+import javax.crypto.Cipher
+import javax.crypto.spec.OAEPParameterSpec
+import javax.crypto.spec.PSource
 
 /**
  * Bilibili Cookie Refresh Manager
@@ -34,12 +40,27 @@ class CookieRefreshManager(
         const val COOKIE_REFRESH_URL = "https://passport.bilibili.com/x/passport-login/web/cookie/refresh"
         const val CONFIRM_REFRESH_URL = "https://passport.bilibili.com/x/passport-login/web/confirm/refresh"
         const val CORRESPOND_BASE_URL = "https://www.bilibili.com/correspond/1/"
-        
-        // RSA encryption service (used to generate CorrespondPath)
-        const val RSA_API_URL = "https://passport.bilibili.com/x/passport-login/web/key"
-        
+
         // Regex pattern to match refresh_csrf on the correspond page
         private val REFRESH_CSRF_PATTERN = Pattern.compile("<div id=\"1-name\">([^<]+)</div>")
+
+        // Bilibili's fixed 1024-bit RSA public key for encrypting the CorrespondPath message
+        // (does not rotate - see https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/login/cookie_refresh.md).
+        private const val CORRESPOND_PUBLIC_KEY_PEM = """-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDLgd2OAkcGVtoE3ThUREbio0Eg
+Uc/prcajMKXvkCKFCWhJYJcLkcM2DKKcSeFpD/j6Boy538YXnR6VhcuUJOhH2x71
+nzPjfdTcqMz7djHum0qSZA0AyCBDABUqCrfNgCiJ00Ra7GmRj+YCK1NJEuewlb40
+JNrRuoEUXpabUzGB8QIDAQAB
+-----END PUBLIC KEY-----"""
+
+        private val correspondPublicKey: PublicKey by lazy {
+            val base64Body = CORRESPOND_PUBLIC_KEY_PEM
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replace("\\s".toRegex(), "")
+            val keySpec = X509EncodedKeySpec(Base64.getDecoder().decode(base64Body))
+            KeyFactory.getInstance("RSA").generatePublic(keySpec)
+        }
     }
     
     fun shouldRefreshCookies(): Boolean {
@@ -101,16 +122,21 @@ class CookieRefreshManager(
         }
     }
     
+    // CorrespondPath is RSA-OAEP(SHA-256)-encrypting "refresh_<timestamp>" with bilibili's
+    // public key and hex-encoding the ciphertext - it is NOT an arbitrary local hash. Bilibili
+    // decrypts it server-side to validate the timestamp; anything else gets a 404 correspond
+    // page (which is exactly the "Unable to extract refresh_csrf" failure this used to hit).
     private fun generateCorrespondPath(): String {
-        val timestamp = System.currentTimeMillis()
-        
-        // Generate a hash value based on timestamp
-        val input = "${timestamp}_${ThreadLocalRandom.current().nextLong()}"
-        val digest = MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest(input.toByteArray(StandardCharsets.UTF_8))
-        
-        // Convert to hexadecimal string
-        return hash.joinToString("") { "%02x".format(it) }
+        val message = "refresh_${System.currentTimeMillis()}"
+
+        val oaepParams = OAEPParameterSpec(
+            "SHA-256", "MGF1", MGF1ParameterSpec.SHA256, PSource.PSpecified.DEFAULT
+        )
+        val cipher = Cipher.getInstance("RSA/ECB/OAEPPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, correspondPublicKey, oaepParams)
+        val encrypted = cipher.doFinal(message.toByteArray(StandardCharsets.UTF_8))
+
+        return encrypted.joinToString("") { "%02x".format(it) }
     }
 
     private fun getRefreshCsrf(correspondPath: String): String {
